@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>نقطة بيع بسيطة</title>
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      padding: 30px;
+      background: #f2f2f2;
+    }
+    .product {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      padding: 20px;
+      max-width: 300px;
+      margin: 20px auto;
+    }
+    .product img {
+      width: 100%;
+      border-radius: 10px;
+    }
+    .btn {
+      background-color: green;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn:disabled {
+      background-color: gray;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>قائمة المنتجات</h1>
+  <div id="products"></div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbxiOyr1jLDkNxcDs_X7FB0Io9fHSJC-S9sfkXfQnyekOeOKg0vF6x4Oze8kLMILakMArQ/exec";
+
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(products => {
+        const container = document.getElementById("products");
+        container.innerHTML = "";
+
+        products.forEach(product => {
+          const div = document.createElement("div");
+          div.className = "product";
+          div.innerHTML = `
+            <img src="${product.image_url}" alt="${product.product_name_ar}">
+            <h2>${product.product_name_ar}</h2>
+            <p>السعر: <strong>${product.price}₪</strong></p>
+            <label>الكمية: </label>
+            <input type="number" id="qty-${product.product_code}" min="1" value="1"><br>
+            <button class="btn" onclick="buyProduct('${product.product_code}', ${product.price})">شراء</button>
+            <p id="msg-${product.product_code}"></p>
+          `;
+          container.appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById("products").innerText = "فشل في تحميل المنتجات";
+        console.error(err);
+      });
+
+    function buyProduct(code, price) {
+      const quantity = document.getElementById("qty-" + code).value;
+      const data = {
+        product_code: code,
+        quantity: quantity,
+        price: price
+      };
+
+      document.getElementById("msg-" + code).innerText = "جارٍ الإرسال...";
+
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      .then(res => res.text())
+      .then(msg => {
+        document.getElementById("msg-" + code).innerText = msg;
+      })
+      .catch(err => {
+        document.getElementById("msg-" + code).innerText = "فشل في الإرسال";
+        console.error(err);
+      });
+    }
+  </script>
+
+</body>
+</html>
